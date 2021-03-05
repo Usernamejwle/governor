@@ -90,6 +90,11 @@ class GovernorDriver(Driver):
             if state_data['active']
         ), ''))
 
+        # We're busy if there is an active transition
+        self.setParam(prefix + 'Sts:Busy-Sts', int(any(
+            active for (active, _) in transitions.values()
+        )))
+
         for state_name, state_updates in states.items():
             prefix = '{{Gov:{}-St:{}}}'.format(gov_name, state_name)
             self.setParam(prefix + 'Sts:Active-Sts', state_updates["active"])
@@ -297,10 +302,18 @@ if __name__ == '__main__':
                                                                  'scan': 0.5}})
 
         server.createPV(args.prefix, {
-            gov_prefix+'Sts:AllStates-I': {
+            gov_prefix+'Sts:States-I': {
                 'type': 'string',
                 'value': sorted(governor.states),
-                'count': len(governor.states)
+                'count': len(governor.states),
+            }
+        })
+
+        server.createPV(args.prefix, {
+            gov_prefix+'Sts:Devs-I': {
+                'type': 'string',
+                'value': sorted(governor.devices),
+                'count': len(governor.devices),
             }
         })
 
@@ -316,6 +329,13 @@ if __name__ == '__main__':
                 'type': 'string',
                 'value': [''],
                 'count': len(governor.states),
+            }
+        })
+
+        server.createPV(args.prefix, {
+            gov_prefix+'Sts:Busy-Sts': {
+                'type': 'int',
+                'value': 0,
             }
         })
 
