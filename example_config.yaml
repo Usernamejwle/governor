@@ -1,0 +1,136 @@
+name: Human
+
+devices:
+  bsy:
+    type: Motor
+    name: Beam Stop Y
+    pv: XF:17IDC-ES:FMX{BS:1-Ax:Y}Mtr
+    tolerance: 5
+    timeout: 5
+    positions:
+      Up: 1000
+      Down: 100.0
+  bsz:
+    type: Motor
+    name: Beam Stop Z
+    pv: XF:17IDC-ES:FMX{BS:1-Ax:Z}Mtr
+    tolerance: 5
+    timeout: 5
+    positions:
+      Park: 500.0
+      DAQ: -500
+  li:
+    type: Motor
+    name: Light Y
+    pv: XF:17IDC-ES:FMX{Light:1-Ax:Y}Mtr
+    tolerance: 5
+    timeout: 5
+    positions:
+      In: 1100
+      Out: 100
+  cx:
+    type: Motor
+    name: Cryostream X
+    pv: XF:17IDC-ES:FMX{CS:1-Ax:X}Mtr
+    tolerance: 5
+    timeout: 5
+    positions:
+      In: 455
+      Out: 255
+  cxy:
+    type: Motor
+    name: Cryostream XY
+    pv: XF:17IDC-ES:FMX{CS:1-Ax:XY}Mtr
+    tolerance: 5
+    timeout: 5
+    positions:
+      Near: 676
+      Far: -200
+  dz:
+    type: Motor
+    name: Detector Z
+    pv: XF:17IDC-ES:FMX{Det-Ax:Z}Mtr
+    tolerance: 5
+    timeout: 5
+    positions:
+      In: 100
+      Out: -800
+  collixy:
+    type: Device
+    name: Collimator XY
+    pv: XF:17IDC-ES:FMX{Colli:1-Ax:XY}Mtr
+    tolerance: 5
+    timeout: 5
+    positions:
+      In: 999
+      Out: 666
+  dc:
+     type: Valve
+     name: Detector Cover
+     pv: XF:17IDC-ES:FMX{Det:FMX-Cover}
+     timeout: 5
+
+
+states:
+  M:
+    name: Maintenance
+
+  SE:
+    name: Sample Exchange
+    targets:
+      bsy: {target: Down, limits: [-100.0, 100.0], updateAfter: true}
+      bsz: {target: Park, limits: [0, 600.0]}
+      li: {target: Out, limits: [0, 0]}
+      cxy: {target: Far, limits: [0, 0]}
+      cx: {target: In, limits: [0, 0]}
+      dz: {target: Out, limits: [0, 0]}
+      collixy: {target: Out, limits: [0, 0]}
+  SA:
+    name: Sample Alignment
+    targets:
+      bsy: {target: Up, limits: [0, 0]}
+      bsz: {target: Park, limits: [0, 0]}
+      li: {target: In, limits: [0, 0]}
+      cxy: {target: Near, limits: [0, 0]}
+      cx: {target: In, limits: [0, 0]}
+      dz: {target: In, limits: [0, 0]}
+      collixy: {target: In, limits: [0, 0]}
+  DA:
+    name: Data Acquisition
+    targets:
+      bsy: {target: Up, limits: [0, 0]}
+      bsz: {target: DAQ, limits: [0, 0]}
+      li: {target: Out, limits: [0, 0]}
+      cxy: {target: Near, limits: [0, 0]}
+      cx: {target: In, limits: [0, 0]}
+      dz: {target: In, limits: [0, 0]}
+      collixy: {target: In, limits: [0, 0]}
+  BL:
+    name: Beam Location
+    targets:
+      bsy: {target: Up, limits: [0, 0]}
+      bsz: {target: DAQ, limits: [0, 0]}
+      li: {target: In, limits: [0, 0]}
+      cxy: {target: Far, limits: [0, 0]}
+      cx: {target: Out, limits: [0, 0]}
+      dz: {target: Out, limits: [0, 0]}
+      collixy: {target: In, limits: [0, 0]}
+
+init_state: M
+
+transitions:
+  M:
+    SE: [[dz, li, cxy, cx], bsz, bsy, collixy]
+  SE:
+    SA: [cxy, li, bsy, dz, collixy, cx, bsz]
+    BL: [bsy, li, cx, dz, bsz, cxy, collixy]
+  SA:
+    SE: [collixy, dz, bsy, li, cxy, cx, bsz]
+    DA: [li, bsz, bsy, cxy, cx, dz, collixy]
+    BL: [cxy, cx, dz, li, collixy, bsz, bsy]
+  DA:
+    SA: [bsz, li, bsy, cxy, cx, dz, collixy]
+    SE: [dz, collixy, bsz, bsy, cxy, cx, li]
+  BL:
+    SE: [cx, li, bsy, dz, bsz, cxy, collixy]
+    SA: [dz, cx, cxy, li, collixy, bsz, bsy]
