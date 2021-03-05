@@ -239,6 +239,10 @@ The following PVs will be created after the previous invocation:
     FMX{Gov}Cmd:Abort-Cmd
     FMX{Gov}Cmd:Kill-Cmd
 
+    FMX{Gov}Sts:AllStates-I             # a list of all state names
+    FMX{Gov}Sts:State-I                 # the name of the current state
+    FMX{Gov}Sts:Reach-I                 # a list of all currently reachable states
+
     FMX{Gov-Human}Sts:Status-Sts
     FMX{Gov-Human}Sts:Msg-Sts
 

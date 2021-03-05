@@ -74,6 +74,22 @@ class GovernorDriver(Driver):
             The current target values for all governor Devices. A dictionary of the form:
                 { device_name [str]: list of (target_name [str], target_value [float])
         """
+        prefix = '{{Gov:{}}}'.format(gov_name)
+
+        # Sorted list of reachable state names
+        self.setParam(prefix + 'Sts:Reach-I', sorted(list(set(
+            state_to
+            for (_, state_to), (_, reachable) in transitions.items()
+            if reachable
+        ))))
+
+        # All active states (there should be only one, pick first)
+        self.setParam(prefix + 'Sts:State-I', next((
+            state_name
+            for state_name, state_data in states.items()
+            if state_data['active']
+        ), ''))
+
         for state_name, state_updates in states.items():
             prefix = '{{Gov:{}-St:{}}}'.format(gov_name, state_name)
             self.setParam(prefix + 'Sts:Active-Sts', state_updates["active"])
@@ -279,6 +295,29 @@ if __name__ == '__main__':
         server.createPV(args.prefix, {gov_prefix+'Sts:Msg-Sts': {'type': 'string',
                                                                  'value': "",
                                                                  'scan': 0.5}})
+
+        server.createPV(args.prefix, {
+            gov_prefix+'Sts:AllStates-I': {
+                'type': 'string',
+                'value': sorted(governor.states),
+                'count': len(governor.states)
+            }
+        })
+
+        server.createPV(args.prefix, {
+            gov_prefix+'Sts:State-I': {
+                'type': 'string',
+                'value': ''
+            }
+        })
+
+        server.createPV(args.prefix, {
+            gov_prefix+'Sts:Reach-I': {
+                'type': 'string',
+                'value': [''],
+                'count': len(governor.states),
+            }
+        })
 
         for device_name, device in governor.devices.items():
             for target in device.positions:
