@@ -173,6 +173,7 @@ class GovernorDriver(Driver):
         self._logger.debug("write(reason=%s,value=%s)", reason, value)
         status = True
 
+        gov_abort = re.match('\{Gov:(?P<gov_name>.*)\}Cmd:Abort-Cmd', reason)
         gov_go = re.match('\{Gov:(?P<gov_name>.*)\}Cmd:Go-Cmd', reason)
         # Limit reason is something like: {Gov:Human-St:SE}HLim:bsz-Pos
         dev_limit = re.match('\{Gov:(?P<gov_name>.*)-St:(?P<state_name>.*)\}(?P<limit>.*):(?P<dev_name>.*)-Pos', reason)
@@ -200,6 +201,10 @@ class GovernorDriver(Driver):
                         self._governors[self._active_governor].set_enabled(True)
                 else:
                     status = False
+
+            elif gov_abort is not None:
+                governor = self._governors[gov_go.group('gov_name')]
+                governor.abort()
 
             elif gov_go is not None:
                 governor = self._governors[gov_go.group('gov_name')]
@@ -296,20 +301,52 @@ if __name__ == '__main__':
     server = SimpleServer()
 
     # General PVs that control all Governors
-    server.createPV(args.prefix, {'{Gov}Active-Sel': {'type': 'enum',
-                                                      'enums': ['Inactive', 'Active'],
-                                                      'value': 1}})
-    server.createPV(args.prefix, {'{Gov}Config-Sel': {'type': 'enum',
-                                                      'enums': [config['name'] for config in configs],
-                                                      'value': 0}})
-    server.createPV(args.prefix, {'{Gov}Cmd:Abort-Cmd': {'type': 'int',
-                                                         'value': 0}})
-    server.createPV(args.prefix, {'{Gov}Cmd:Kill-Cmd': {'type': 'int',
-                                                        'value': 0}})
+
+    # Select whether governors are active (can transition to a different state)
+    server.createPV(args.prefix, {
+        '{Gov}Active-Sel': {
+            'type': 'enum',
+            'enums': ['Inactive', 'Active'],
+            'value': 1
+        }
+    })
+
+    # Select which governor to use
+    server.createPV(args.prefix, {
+        '{Gov}Config-Sel': {
+            'type': 'enum',
+            'enums': [config['name'] for config in configs],
+            'value': 0
+        }
+    })
+
+    # Abort all governors
+    server.createPV(args.prefix, {
+        '{Gov}Cmd:Abort-Cmd': {
+            'type': 'int',
+            'value': 0
+        }
+    })
+
+    # Kill entire IOC
+    server.createPV(args.prefix, {
+        '{Gov}Cmd:Kill-Cmd': {
+            'type': 'int',
+            'value': 0
+        }
+    })
 
     # Governor-specific PVs
     for gov_name, governor in governors.items():
         gov_prefix = "{{Gov:{}}}".format(gov_name)
+
+        # Abort this governor
+        server.createPV(args.prefix, {
+            gov_prefix+'Cmd:Abort-Cmd': {
+                'type': 'int',
+                'value': 0
+            }
+        })
 
         # Command: write the desired destination state name
         # to this PV to start a transition
@@ -397,6 +434,14 @@ if __name__ == '__main__':
         })
 
         for device_name, device in governor.devices.items():
+            server.createPV(args.prefix, {
+                '{{Gov:{}-Dev:{}}}Sts:Tgts-I'.format(gov_name, device_name): {
+                    'type': 'string',
+                    'value': list(device.positions),
+                    'count': len(device.positions),
+                }
+            })
+
             for target in device.positions:
                 name = '{{Gov:{}-Dev:{}}}Pos:{}-Pos'.format(gov_name, device_name, target)
                 server.createPV(args.prefix, {name: {'type': 'float', 'value': 0}})
