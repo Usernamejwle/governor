@@ -198,17 +198,35 @@ class ConfigManager:
                     ok = False
 
                 # All devices mentioned in a Transition must have been declared before
-                msg = "Transition %s->%s contains invalid device '%s'"
-                for device in sequence:
-                    if isinstance(device, str):
-                        if device not in self._raw_config['devices']:
-                            self._logger.error(msg, origin, destination, device)
-                            ok = False
+                sequence_devices = set()
+                for device_name in sequence:
+                    if isinstance(device_name, str):
+                        sequence_devices.add(device_name)
                     else:
-                        for d in device:
-                            if d not in self._raw_config['devices']:
-                                self._logger.error(msg, origin, destination, device)
-                                ok = False
+                        sequence_devices |= set(device_name)
+
+                msg = "Transition %s->%s contains invalid device '%s'"
+                for device_name in sequence_devices:
+                    if device_name not in self._raw_config['devices']:
+                        self._logger.error(msg, origin, destination, device_name)
+                        ok = False
+
+                # All devices mentioned in a Transition must be part of the target State
+                msg = "Transition %s->%s sequence moves a device '%s' that is not part of the destination"
+                destination_state = self._raw_config['states'][destination]
+                for device_name in sequence_devices:
+                    if device_name not in destination_state['targets']:
+                        self._logger.error(msg, origin, destination, device_name)
+                        ok = False
+
+                # All devices in the destination must be moved to get there
+                # This might be too strict, leave it out for now
+                #msg = "Transition %s->%s sequence must move device '%s', but it's missing"
+                #for device_name in destination_state['targets']:
+                #    if device_name not in sequence_devices:
+                #        self._logger.error(msg, origin, destination, device_name)
+                #        ok = False
+
         return ok
 
     def _check_init_state(self):
