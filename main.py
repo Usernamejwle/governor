@@ -3,7 +3,9 @@ import logging
 import re
 import time
 from threading import Thread
+from queue import Queue
 from collections import OrderedDict
+from functools import partial
 
 from pcaspy import SimpleServer, Driver, Severity
 
@@ -50,6 +52,25 @@ class GovernorDriver(Driver):
             self.setParam(prefix+'Sts:Status-Sts', governor.status)
             self.setParam(prefix+'Sts:Msg-Sts', governor.status_message)
 
+        self._worker_task = Thread(target=self._worker)
+        self._worker_q = Queue()
+
+        self._worker_task.start()
+
+    def _worker(self):
+        """ Handles transitions in its own thread"""
+        while True:
+            cmd = self._worker_q.get()
+
+            # Check for poison
+            if cmd is None:
+                self._logger.info("stopping worker")
+                break
+
+            action, after = cmd
+            action()
+            after()
+
     def update(self, gov_name, states, transitions, devices):
         """
         Updates all relevant PV values. This method is called by each individual Governor when there is a change in its
@@ -90,10 +111,7 @@ class GovernorDriver(Driver):
             if state_data['active']
         ), ''))
 
-        # We're busy if there is an active transition
-        self.setParam(prefix + 'Sts:Busy-Sts', int(any(
-            active for (active, _) in transitions.values()
-        )))
+        self.setParam(prefix + 'Sts:Busy-Sts', self._governors[gov_name].busy)
 
         for state_name, state_updates in states.items():
             prefix = '{{Gov:{}-St:{}}}'.format(gov_name, state_name)
@@ -186,8 +204,11 @@ class GovernorDriver(Driver):
             elif gov_go is not None:
                 governor = self._governors[gov_go.group('gov_name')]
                 if value in governor.reachable_states():
-                    # Do the transition on a separate thread
-                    Thread(target=governor.do_transition, args=(value,)).start()
+                    # Do the transition on our worker
+                    self._worker_q.put((
+                        partial(governor.do_transition, value),
+                        partial(self.callbackPV, reason)
+                    ))
                 else:
                     status = False
             elif dev_limit is not None:
@@ -289,8 +310,17 @@ if __name__ == '__main__':
     # Governor-specific PVs
     for gov_name, governor in governors.items():
         gov_prefix = "{{Gov:{}}}".format(gov_name)
-        server.createPV(args.prefix, {gov_prefix+'Cmd:Go-Cmd': {'type': 'string',
-                                                                'value': ""}})
+
+        # Command: write the desired destination state name
+        # to this PV to start a transition
+        server.createPV(args.prefix, {
+            gov_prefix+'Cmd:Go-Cmd': {
+                'type': 'string',
+                'value': "",
+                'asyn': True
+            }
+        })
+
         server.createPV(args.prefix, {gov_prefix+'Sts:Status-Sts': {'type': 'enum',
                                                                     'enums': ['Idle', 'Busy', 'Disabled', 'FAULT'],
                                                                     'states': [Severity.NO_ALARM, Severity.NO_ALARM,

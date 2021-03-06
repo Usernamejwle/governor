@@ -439,6 +439,10 @@ class Governor:
         return self._name
 
     @property
+    def state(self):
+        return self._current_state
+
+    @property
     def idle(self):
         return self._status == self.STATUS_IDLE
 
@@ -672,88 +676,103 @@ class Governor:
         """
         if origin is None:
             origin = self._current_state
-        return tuple(self._transitions[origin].keys())
+        return (origin,) + tuple(self._transitions[origin].keys())
 
-    def do_transition(self, dest):
+    def _do_transition(self, dest):
         """
         Performs the Transition from the current state to a desired destination state
         :param dest: str
             The destination state.
         """
 
+        origin = self._current_state
+
+        if not self.enabled:
+            msg = "attempted transition [%s]->[%s] while disabled"
+            self._logger.warning(msg, origin, dest)
+            return
+
+        # Check that the transition is valid
+        if dest not in self.reachable_states():
+            msg = "Can't transition from [%s] to [%s]"
+            self._logger.error(msg, origin, dest)
+            return
+
+        msg = "Transition [%s] -> [%s]"
+        self._logger.info(msg, self._states[origin].fullname, self._states[dest].fullname)
+
+        self._next_state = dest
+
+        # Special case: if already in dest state, do nothing
+        if origin == dest:
+            return
+
+        # Update all positions marked with "updateAfter"
+        for device, target in self._states[origin].targets.items():
+            if target.update_after:
+                self.set_device_position(device, target.target, self._devices[device].val)
+
+        # Read sequence of devices
+        device_sequence = self._transitions[origin][dest]
+        targets = self._states[dest].targets
+
+        self._notify_observer()
+
+        # Start transition
+        all_devices = set(self._devices.keys())
+        moved_devices = set()
+        for item in device_sequence:
+            if self.fault:
+                return
+
+            # Move one device
+            if isinstance(item, str):
+                devices = [(self._devices[item], targets[item])]
+            # Move several devices at once
+            else:
+                devices = [(self._devices[i], targets[i]) for i in item]
+
+            for device, target in devices:
+                moved_devices.add(device.name)
+                if not self._abort_transition:
+                    device.move(target)
+            for device, target in devices:
+                if not self._abort_transition:
+                    device.wait()
+                if not self._abort_transition:
+                    device.target = target
+
+        # Flip current state to destination state
+        if not self.fault and not self._abort_transition:
+            self.set_state(dest)
+
+        # Any device that was not moved by this transition will *NOT* be monitored
+        unmoved_devices = all_devices - moved_devices
+        for device in unmoved_devices:
+            self._devices[device].target = None
+
+    def do_transition(self, dest):
         # Take lock. Only one Transition can happen at a time.
         with self._worker_lock:
             start_time = time.time()
-            origin = self._current_state
 
-            if not self.enabled:
-                msg = "attempted transition [%s]->[%s] while disabled"
-                self._logger.warning(msg, origin, dest)
-                return
-
-            self._abort_transition = False
-
-            # Check that the transition is valid
-            if dest not in self.reachable_states() or origin == dest:
-                msg = "Can't transition from [%s] to [%s]"
-                self._logger.error(msg, origin, dest)
-                return
-
-            msg = "Transition [%s] -> [%s]"
-            self._logger.info(msg, self._states[origin].fullname, self._states[dest].fullname)
-
-            self._next_state = dest
-            self._notify_observer()
-
-            # Update all positions marked with "updateAfter"
-            for device, target in self._states[origin].targets.items():
-                if target.update_after:
-                    self.set_device_position(device, target.target, self._devices[device].val)
-
-            # Read sequence of devices
-            device_sequence = self._transitions[origin][dest]
-            targets = self._states[dest].targets
-
-            # Set status as Busy, start transition
             self._status = self.STATUS_BUSY
             self._notify_observer()
-            all_devices = set(self._devices.keys())
-            moved_devices = set()
-            for item in device_sequence:
-                if self.fault:
-                    return
 
-                # Move one device
-                if isinstance(item, str):
-                    devices = [(self._devices[item], targets[item])]
-                # Move several devices at once
-                else:
-                    devices = [(self._devices[i], targets[i]) for i in item]
-
-                for device, target in devices:
-                    moved_devices.add(device.name)
-                    if not self._abort_transition:
-                        device.move(target)
-                for device, target in devices:
-                    if not self._abort_transition:
-                        device.wait()
-                    if not self._abort_transition:
-                        device.target = target
-
-            # Flip current state to destination state
-            if not self.fault and not self._abort_transition:
-                self.set_state(dest)
-
-            # Any device that was not moved by this transition will *NOT* be monitored
-            unmoved_devices = all_devices - moved_devices
-            for device in unmoved_devices:
-                self._devices[device].target = None
-
-            self._status = self.STATUS_IDLE
-            self._notify_observer()
             self._abort_transition = False
 
-            self._logger.info("Transition took %.3f seconds", time.time() - start_time)
+            try:
+                self._do_transition(dest)
+            except Exception as e:
+                self._logger.exception("Exception during transition: %s", e)
+
+            if self._status == self.STATUS_BUSY:
+                self._status = self.STATUS_IDLE
+
+            self._abort_transition = False
+            self._notify_observer()
+
+            self._logger.debug("Transition took %.3f seconds", time.time() - start_time)
 
     def check_fault_state(self):
         """ Checks if still in fault state """
