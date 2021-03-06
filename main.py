@@ -321,16 +321,30 @@ if __name__ == '__main__':
             }
         })
 
-        server.createPV(args.prefix, {gov_prefix+'Sts:Status-Sts': {'type': 'enum',
-                                                                    'enums': ['Idle', 'Busy', 'Disabled', 'FAULT'],
-                                                                    'states': [Severity.NO_ALARM, Severity.NO_ALARM,
-                                                                               Severity.NO_ALARM, Severity.MAJOR_ALARM],
-                                                                    'value': 0,
-                                                                    'scan': 0.5}})
-        server.createPV(args.prefix, {gov_prefix+'Sts:Msg-Sts': {'type': 'string',
-                                                                 'value': "",
-                                                                 'scan': 0.5}})
+        # Governor's status
+        server.createPV(args.prefix, {
+            gov_prefix+'Sts:Status-Sts': {
+                'type': 'enum',
+                'enums': ['Idle', 'Busy', 'Disabled', 'FAULT'],
+                'states': [
+                    Severity.NO_ALARM, Severity.NO_ALARM,
+                    Severity.NO_ALARM, Severity.MAJOR_ALARM
+                ],
+                'value': 0,
+                'scan': 0.5
+            }
+        })
 
+        # Governor's message
+        server.createPV(args.prefix, {
+            gov_prefix+'Sts:Msg-Sts': {
+                'type': 'string',
+                'value': "",
+                'scan': 0.5
+            }
+        })
+
+        # All existing states
         server.createPV(args.prefix, {
             gov_prefix+'Sts:States-I': {
                 'type': 'string',
@@ -339,6 +353,7 @@ if __name__ == '__main__':
             }
         })
 
+        # All existing devices
         server.createPV(args.prefix, {
             gov_prefix+'Sts:Devs-I': {
                 'type': 'string',
@@ -347,6 +362,7 @@ if __name__ == '__main__':
             }
         })
 
+        # Current state
         server.createPV(args.prefix, {
             gov_prefix+'Sts:State-I': {
                 'type': 'string',
@@ -354,6 +370,7 @@ if __name__ == '__main__':
             }
         })
 
+        # States reachable from current state
         server.createPV(args.prefix, {
             gov_prefix+'Sts:Reach-I': {
                 'type': 'string',
@@ -362,10 +379,20 @@ if __name__ == '__main__':
             }
         })
 
+        # Busy transitioning
         server.createPV(args.prefix, {
             gov_prefix+'Sts:Busy-Sts': {
                 'type': 'int',
                 'value': 0,
+            }
+        })
+
+        # All existing devices
+        server.createPV(args.prefix, {
+            gov_prefix+'Sts:Devs-I': {
+                'type': 'string',
+                'value': list(governor.devices),
+                'count': len(governor.devices)
             }
         })
 
