@@ -632,12 +632,16 @@ class Governor:
         :param position: str
             The name of the device's position
         :param value: float
-            The new value for the position
+            The new value for the position. Cannot be None
         :return: True if successful, False otherwise
         """
-        self._logger.info("Setting device '%s' position '%s' to value '%s'", device, position, value)
-        self._devices[device].positions[position] = value
-        self._config.commit()
+        if value is not None:
+            self._logger.info("Setting device '%s' position '%s' to value '%s'", device, position, value)
+            self._devices[device].positions[position] = value
+            self._config.commit()
+        else:
+            msg = "Won't set device '%s' position '%s' to None. Ensure '%s' participates in the transition sequence"
+            self._logger.warning(msg, device, position, device)
         return True
 
     def _parse_config(self, config):
@@ -736,6 +740,7 @@ class Governor:
                 moved_devices.add(device.name)
                 if not self._abort_transition:
                     device.move(target)
+
             for device, target in devices:
                 if not self._abort_transition:
                     device.wait()
