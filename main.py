@@ -203,7 +203,7 @@ class GovernorDriver(Driver):
                     status = False
 
             elif gov_abort is not None:
-                governor = self._governors[gov_go.group('gov_name')]
+                governor = self._governors[gov_abort.group('gov_name')]
                 governor.abort()
 
             elif gov_go is not None:
