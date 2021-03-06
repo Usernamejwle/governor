@@ -239,73 +239,81 @@ The following PVs will be created after the previous invocation:
     FMX{Gov}Cmd:Abort-Cmd
     FMX{Gov}Cmd:Kill-Cmd
 
-    FMX{Gov}Sts:States-I                # a list of all state names
-    FMX{Gov}Sts:Devs-I                  # a list of all device names
-    FMX{Gov}Sts:State-I                 # the name of the current state
-    FMX{Gov}Sts:Reach-I                 # a list of all currently reachable states
-    FMX{Gov}Sts:Busy-Sts                # 1 if performing a transition, 0 otherwise
+    FMX{Gov:Human}Sts:States-I          # a list of all state names
+    FMX{Gov:Human}Sts:Devs-I            # a list of all device names
+    FMX{Gov:Human}Sts:State-I           # the name of the current state
+    FMX{Gov:Human}Sts:Reach-I           # a list of all currently reachable states
+    FMX{Gov:Human}Sts:Busy-Sts          # 1 if performing a transition, 0 otherwise
 
-    FMX{Gov-Human}Sts:Status-Sts
-    FMX{Gov-Human}Sts:Msg-Sts
+    FMX{Gov:Robot}Sts:States-I
+    FMX{Gov:Robot}Sts:Devs-I
+    FMX{Gov:Robot}Sts:State-I
+    FMX{Gov:Robot}Sts:Reach-I
+    FMX{Gov:Robot}Sts:Busy-Sts
 
-    FMX{Gov-Robot}Sts:Status-Sts
-    FMX{Gov-Robot}Sts:Msg-Sts
+    FMX{Gov:Human}Cmd:Go-Cmd            # write the name of the desired state to start a transition
+    FMX{Gov:Human}Sts:Status-Sts        # current state machine status (Idle/Busy/Disabled/FAULT)
+    FMX{Gov:Human}Sts:Msg-Sts           # message from the Governor
 
-    FMX{Gov-Human-Dev:bs}Pos:In-Pos     # value: 40.0
-    FMX{Gov-Human-Dev:bs}Pos:Out-Pos    # value: 15.0
-    FMX{Gov-Human-Dev:li}Pos:Up-Pos     # value: 8.0
-    FMX{Gov-Human-Dev:li}Pos:Down-Pos   # value: -100.0
+    FMX{Gov:Robot}Cmd:Go-Cmd
+    FMX{Gov:Robot}Sts:Status-Sts
+    FMX{Gov:Robot}Sts:Msg-Sts
 
-    FMX{Gov-Robot-Dev:bs}Pos:In-Pos     # value: 40.0
-    FMX{Gov-Robot-Dev:bs}Pos:Out-Pos    # value: 15.0
-    FMX{Gov-Robot-Dev:li}Pos:Up-Pos     # value: 8.0
-    FMX{Gov-Robot-Dev:li}Pos:Down-Pos   # value: -100.0
+    FMX{Gov:Human-Dev:bs}Pos:In-Pos     # value: 40.0
+    FMX{Gov:Human-Dev:bs}Pos:Out-Pos    # value: 15.0
+    FMX{Gov:Human-Dev:li}Pos:Up-Pos     # value: 8.0
+    FMX{Gov:Human-Dev:li}Pos:Down-Pos   # value: -100.0
 
-    FMX{Gov-Human-St:M}Sts:Reach-Sts
-    FMX{Gov-Human-St:M}Sts:Active-Sts
-    FMX{Gov-Human-St:SE}Sts:Reach-Sts
-    FMX{Gov-Human-St:SE}Sts:Active-Sts
-    FMX{Gov-Human-St:SA}Sts:Reach-Sts
-    FMX{Gov-Human-St:SA}Sts:Active-Sts
+    FMX{Gov:Robot-Dev:bs}Pos:In-Pos     # value: 40.0
+    FMX{Gov:Robot-Dev:bs}Pos:Out-Pos    # value: 15.0
+    FMX{Gov:Robot-Dev:li}Pos:Up-Pos     # value: 8.0
+    FMX{Gov:Robot-Dev:li}Pos:Down-Pos   # value: -100.0
 
-    FMX{Gov-Robot-St:M}Sts:Reach-Sts
-    FMX{Gov-Robot-St:M}Sts:Active-Sts
-    FMX{Gov-Robot-St:SE}Sts:Reach-Sts
-    FMX{Gov-Robot-St:SE}Sts:Active-Sts
-    FMX{Gov-Robot-St:SA}Sts:Reach-Sts
-    FMX{Gov-Robot-St:SA}Sts:Active-Sts
+    FMX{Gov:Human-St:M}Sts:Reach-Sts
+    FMX{Gov:Human-St:M}Sts:Active-Sts
+    FMX{Gov:Human-St:SE}Sts:Reach-Sts
+    FMX{Gov:Human-St:SE}Sts:Active-Sts
+    FMX{Gov:Human-St:SA}Sts:Reach-Sts
+    FMX{Gov:Human-St:SA}Sts:Active-Sts
 
-    FMX{Gov-Human-St:SE}LLim:bs-Pos     # value: 0.0
-    FMX{Gov-Human-St:SE}HLim:bs-Pos     # value: 0.0
-    FMX{Gov-Human-St:SE}LLim:li-Pos     # value: 0.0
-    FMX{Gov-Human-St:SE}HLim:li-Pos     # value: 0.0
-    FMX{Gov-Human-St:SA}LLim:bs-Pos     # value: 0.0
-    FMX{Gov-Human-St:SA}HLim:bs-Pos     # value: 0.0
-    FMX{Gov-Human-St:SA}LLim:li-Pos     # value: -101.0
-    FMX{Gov-Human-St:SA}HLim:li-Pos     # value: 1.0
+    FMX{Gov:Robot-St:M}Sts:Reach-Sts
+    FMX{Gov:Robot-St:M}Sts:Active-Sts
+    FMX{Gov:Robot-St:SE}Sts:Reach-Sts
+    FMX{Gov:Robot-St:SE}Sts:Active-Sts
+    FMX{Gov:Robot-St:SA}Sts:Reach-Sts
+    FMX{Gov:Robot-St:SA}Sts:Active-Sts
 
-    FMX{Gov-Robot-St:SE}LLim:bs-Pos     # value: 0.0
-    FMX{Gov-Robot-St:SE}HLim:bs-Pos     # value: 0.0
-    FMX{Gov-Robot-St:SE}LLim:li-Pos     # value: 0.0
-    FMX{Gov-Robot-St:SE}HLim:li-Pos     # value: 0.0
-    FMX{Gov-Robot-St:SA}LLim:bs-Pos     # value: 0.0
-    FMX{Gov-Robot-St:SA}HLim:bs-Pos     # value: 0.0
-    FMX{Gov-Robot-St:SA}LLim:li-Pos     # value: -101.0
-    FMX{Gov-Robot-St:SA}HLim:li-Pos     # value: 1.0
+    FMX{Gov:Human-St:SE}LLim:bs-Pos     # value: 0.0
+    FMX{Gov:Human-St:SE}HLim:bs-Pos     # value: 0.0
+    FMX{Gov:Human-St:SE}LLim:li-Pos     # value: 0.0
+    FMX{Gov:Human-St:SE}HLim:li-Pos     # value: 0.0
+    FMX{Gov:Human-St:SA}LLim:bs-Pos     # value: 0.0
+    FMX{Gov:Human-St:SA}HLim:bs-Pos     # value: 0.0
+    FMX{Gov:Human-St:SA}LLim:li-Pos     # value: -101.0
+    FMX{Gov:Human-St:SA}HLim:li-Pos     # value: 1.0
 
-    FMX{Gov-Human-Tr:M-SE}Sts:Active-Sts
-    FMX{Gov-Human-Tr:M-SE}Sts:Reach-Sts
-    FMX{Gov-Human-Tr:SE-SA}Sts:Active-Sts
-    FMX{Gov-Human-Tr:SE-SA}Sts:Reach-Sts
-    FMX{Gov-Human-Tr:SA-SE}Sts:Active-Sts
-    FMX{Gov-Human-Tr:SA-SE}Sts:Reach-Sts
+    FMX{Gov:Robot-St:SE}LLim:bs-Pos     # value: 0.0
+    FMX{Gov:Robot-St:SE}HLim:bs-Pos     # value: 0.0
+    FMX{Gov:Robot-St:SE}LLim:li-Pos     # value: 0.0
+    FMX{Gov:Robot-St:SE}HLim:li-Pos     # value: 0.0
+    FMX{Gov:Robot-St:SA}LLim:bs-Pos     # value: 0.0
+    FMX{Gov:Robot-St:SA}HLim:bs-Pos     # value: 0.0
+    FMX{Gov:Robot-St:SA}LLim:li-Pos     # value: -101.0
+    FMX{Gov:Robot-St:SA}HLim:li-Pos     # value: 1.0
 
-    FMX{Gov-Robot-Tr:M-SE}Sts:Active-Sts
-    FMX{Gov-Robot-Tr:M-SE}Sts:Reach-Sts
-    FMX{Gov-Robot-Tr:SE-SA}Sts:Active-Sts
-    FMX{Gov-Robot-Tr:SE-SA}Sts:Reach-Sts
-    FMX{Gov-Robot-Tr:SA-SE}Sts:Active-Sts
-    FMX{Gov-Robot-Tr:SA-SE}Sts:Reach-Sts
+    FMX{Gov:Human-Tr:M-SE}Sts:Active-Sts
+    FMX{Gov:Human-Tr:M-SE}Sts:Reach-Sts
+    FMX{Gov:Human-Tr:SE-SA}Sts:Active-Sts
+    FMX{Gov:Human-Tr:SE-SA}Sts:Reach-Sts
+    FMX{Gov:Human-Tr:SA-SE}Sts:Active-Sts
+    FMX{Gov:Human-Tr:SA-SE}Sts:Reach-Sts
+
+    FMX{Gov:Robot-Tr:M-SE}Sts:Active-Sts
+    FMX{Gov:Robot-Tr:M-SE}Sts:Reach-Sts
+    FMX{Gov:Robot-Tr:SE-SA}Sts:Active-Sts
+    FMX{Gov:Robot-Tr:SE-SA}Sts:Reach-Sts
+    FMX{Gov:Robot-Tr:SA-SE}Sts:Active-Sts
+    FMX{Gov:Robot-Tr:SA-SE}Sts:Reach-Sts
 
 
 
