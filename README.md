@@ -234,87 +234,56 @@ potentially different values in `Human` and in `Robot`.
 
 The following PVs will be created after the previous invocation:
 
-    FMX{Gov}Active-Sel
-    FMX{Gov}Config-Sel                  # enum values: "Human", "Robot"
-    FMX{Gov}Cmd:Abort-Cmd
-    FMX{Gov}Cmd:Kill-Cmd
+    FMX{Gov}Active-Sel                    # enum values: "Inactive", "Active". "Inactive" prevents all changes
+    FMX{Gov}Config-Sel                    # enum values: "Human", "Robot"
+    FMX{Gov}Sts:Configs-I                 # list of all state machines: ["Human", "Robot"]
+    FMX{Gov}Cmd:Abort-Cmd                 # when written to, abort the current transition in active Governor instance
+    FMX{Gov}Cmd:Kill-Cmd                  # when written to, forces the IOC to exit
 
-    FMX{Gov:Human}Sts:States-I          # a list of all state names
-    FMX{Gov:Human}Sts:Devs-I            # a list of all device names
-    FMX{Gov:Human}Sts:State-I           # the name of the current state
-    FMX{Gov:Human}Sts:Reach-I           # a list of all currently reachable states
-    FMX{Gov:Human}Sts:Busy-Sts          # 1 if performing a transition, 0 otherwise
+    FMX{Gov:Human}Sts:States-I            # a sorted list of all state names: ["M", "SA", "SE"]
+    FMX{Gov:Human}Sts:Devs-I              # a sorted list of all device names: ["bs", "dc", "li"]
+    FMX{Gov:Human}Sts:State-I             # the name of the current state: "M" (at first)
+    FMX{Gov:Human}Sts:Reach-I             # a list of all currently reachable states: ["SE"] (at first)
+    FMX{Gov:Human}Sts:Busy-Sts            # 1 if performing a transition, 0 otherwise
 
-    FMX{Gov:Robot}Sts:States-I
-    FMX{Gov:Robot}Sts:Devs-I
-    FMX{Gov:Robot}Sts:State-I
-    FMX{Gov:Robot}Sts:Reach-I
-    FMX{Gov:Robot}Sts:Busy-Sts
+    FMX{Gov:Human}Cmd:Abort-Cmd           # when written to, abort the current transition
+    FMX{Gov:Human}Cmd:Go-Cmd              # write the name of the desired state to start a transition
+    FMX{Gov:Human}Sts:Status-Sts          # current state machine status (Idle/Busy/Disabled/FAULT)
+    FMX{Gov:Human}Sts:Msg-Sts             # message from the Governor
 
-    FMX{Gov:Human}Cmd:Go-Cmd            # write the name of the desired state to start a transition
-    FMX{Gov:Human}Sts:Status-Sts        # current state machine status (Idle/Busy/Disabled/FAULT)
-    FMX{Gov:Human}Sts:Msg-Sts           # message from the Governor
+    FMX{Gov:Human-Dev:bs}Sts:Tgts-I       # value: ["In", "Out"]
+    FMX{Gov:Human-Dev:li}Sts:Tgts-I       # value: ["Up", "Down"]
 
-    FMX{Gov:Robot}Cmd:Go-Cmd
-    FMX{Gov:Robot}Sts:Status-Sts
-    FMX{Gov:Robot}Sts:Msg-Sts
+    FMX{Gov:Human-Dev:bs}Pos:In-Pos       # value: 40.0
+    FMX{Gov:Human-Dev:bs}Pos:Out-Pos      # value: 15.0
+    FMX{Gov:Human-Dev:li}Pos:Up-Pos       # value: 8.0
+    FMX{Gov:Human-Dev:li}Pos:Down-Pos     # value: -100.0
 
-    FMX{Gov:Human-Dev:bs}Pos:In-Pos     # value: 40.0
-    FMX{Gov:Human-Dev:bs}Pos:Out-Pos    # value: 15.0
-    FMX{Gov:Human-Dev:li}Pos:Up-Pos     # value: 8.0
-    FMX{Gov:Human-Dev:li}Pos:Down-Pos   # value: -100.0
+    FMX{Gov:Human-Dev:bs}SE:LLim-Pos      # value: 0.0, lower limit of the bs device when in state SE
+    FMX{Gov:Human-Dev:bs}SE:HLim-Pos      # value: 0.0, upper limit of the bs device when in state SE
+    FMX{Gov:Human-Dev:bs}SA:LLim-Pos      # value: 0.0
+    FMX{Gov:Human-Dev:bs}SA:HLim-Pos      # value: 0.0
+    FMX{Gov:Human-Dev:li}SE:LLim-Pos      # value: 0.0
+    FMX{Gov:Human-Dev:li}SE:HLim-Pos      # value: 0.0
+    FMX{Gov:Human-Dev:li}SA:LLim-Pos      # value: -101.0
+    FMX{Gov:Human-Dev:li}SA:HLim-Pos      # value: 1.0
 
-    FMX{Gov:Robot-Dev:bs}Pos:In-Pos     # value: 40.0
-    FMX{Gov:Robot-Dev:bs}Pos:Out-Pos    # value: 15.0
-    FMX{Gov:Robot-Dev:li}Pos:Up-Pos     # value: 8.0
-    FMX{Gov:Robot-Dev:li}Pos:Down-Pos   # value: -100.0
-
-    FMX{Gov:Human-St:M}Sts:Reach-Sts
-    FMX{Gov:Human-St:M}Sts:Active-Sts
+    FMX{Gov:Human-St:M}Sts:Reach-Sts      # if 1, the state M is reachable from the current state
+    FMX{Gov:Human-St:M}Sts:Active-Sts     # if 1, M is the current state
     FMX{Gov:Human-St:SE}Sts:Reach-Sts
     FMX{Gov:Human-St:SE}Sts:Active-Sts
     FMX{Gov:Human-St:SA}Sts:Reach-Sts
     FMX{Gov:Human-St:SA}Sts:Active-Sts
 
-    FMX{Gov:Robot-St:M}Sts:Reach-Sts
-    FMX{Gov:Robot-St:M}Sts:Active-Sts
-    FMX{Gov:Robot-St:SE}Sts:Reach-Sts
-    FMX{Gov:Robot-St:SE}Sts:Active-Sts
-    FMX{Gov:Robot-St:SA}Sts:Reach-Sts
-    FMX{Gov:Robot-St:SA}Sts:Active-Sts
-
-    FMX{Gov:Human-St:SE}LLim:bs-Pos     # value: 0.0
-    FMX{Gov:Human-St:SE}HLim:bs-Pos     # value: 0.0
-    FMX{Gov:Human-St:SE}LLim:li-Pos     # value: 0.0
-    FMX{Gov:Human-St:SE}HLim:li-Pos     # value: 0.0
-    FMX{Gov:Human-St:SA}LLim:bs-Pos     # value: 0.0
-    FMX{Gov:Human-St:SA}HLim:bs-Pos     # value: 0.0
-    FMX{Gov:Human-St:SA}LLim:li-Pos     # value: -101.0
-    FMX{Gov:Human-St:SA}HLim:li-Pos     # value: 1.0
-
-    FMX{Gov:Robot-St:SE}LLim:bs-Pos     # value: 0.0
-    FMX{Gov:Robot-St:SE}HLim:bs-Pos     # value: 0.0
-    FMX{Gov:Robot-St:SE}LLim:li-Pos     # value: 0.0
-    FMX{Gov:Robot-St:SE}HLim:li-Pos     # value: 0.0
-    FMX{Gov:Robot-St:SA}LLim:bs-Pos     # value: 0.0
-    FMX{Gov:Robot-St:SA}HLim:bs-Pos     # value: 0.0
-    FMX{Gov:Robot-St:SA}LLim:li-Pos     # value: -101.0
-    FMX{Gov:Robot-St:SA}HLim:li-Pos     # value: 1.0
-
-    FMX{Gov:Human-Tr:M-SE}Sts:Active-Sts
-    FMX{Gov:Human-Tr:M-SE}Sts:Reach-Sts
+    FMX{Gov:Human-Tr:M-SE}Sts:Active-Sts  # when 1, the transition M->SE is in progress
+    FMX{Gov:Human-Tr:M-SE}Sts:Reach-Sts   # when 1, the transition M->SE can be requested
     FMX{Gov:Human-Tr:SE-SA}Sts:Active-Sts
     FMX{Gov:Human-Tr:SE-SA}Sts:Reach-Sts
     FMX{Gov:Human-Tr:SA-SE}Sts:Active-Sts
     FMX{Gov:Human-Tr:SA-SE}Sts:Reach-Sts
 
-    FMX{Gov:Robot-Tr:M-SE}Sts:Active-Sts
-    FMX{Gov:Robot-Tr:M-SE}Sts:Reach-Sts
-    FMX{Gov:Robot-Tr:SE-SA}Sts:Active-Sts
-    FMX{Gov:Robot-Tr:SE-SA}Sts:Reach-Sts
-    FMX{Gov:Robot-Tr:SA-SE}Sts:Active-Sts
-    FMX{Gov:Robot-Tr:SA-SE}Sts:Reach-Sts
-
+    # Also, corresponding PVs will be generated with the
+    # prefix "FMX{Gov:Robot"
 
 
 ## State Machines
@@ -400,7 +369,7 @@ NSLS-II Naming Convention.
 * `{Gov}Config-Sel`: R/W, enumeration. Allowed values: names of the loaded State Machines.
   Controls which State Machine is active at the moment.
 
-* `{Gov}Cmd:Go-Cmd`: W/O, string. Write the name of a **State** to this PV to start a **Transition**.
+* `{Gov}Sts:Configs-I`: R/O, list of string. Holds the list of existing State Machines.
 
 * `{Gov}Cmd:Abort-Cmd`: W/O. Writing any value to this PV will abort the current in progress
   **Transition**.
@@ -410,6 +379,8 @@ NSLS-II Naming Convention.
 ### Per State Machine PVs
 
 Assuming a State Machine named "SM".
+
+* `{Gov:SM}Cmd:Go-Cmd`: W/O, string. Write the name of a **State** to this PV to start a **Transition**.
 
 * `{Gov:SM}Sts:Status-Sts`: R/O, enumeration. Possible values:
   * `Idle`: when holding a state.
@@ -425,6 +396,15 @@ Assuming a State Machine named "SM".
   * When status is `FAULT`, this PV will display the conditions that are causing the State
   Machine to be in a Fault state.
 
+* `{Gov:SM}Sts:Busy-Sts`: R/O, enumeration. Possible values:
+  * `No`: a **Transition** is not in progress.
+  * `Yes`: a **Transition** is in progress.
+* `{Gov:SM}Sts:State-I`: R/O, string. Holds current **State** name.
+* `{Gov:SM}Sts:Devs-I`: R/O, list of string. Holds all **Device** names.
+* `{Gov:SM}Sts:States-I`: R/O, list of string. Holds all **State** names.
+* `{Gov:SM}Sts:Reach-I`: R/O, list of string. Holds all **State** names that are reachable
+  from the current state.
+
 ### Per State PVs
 
 Assuming a State Machine named "SM" and a **State** named "A".
@@ -434,13 +414,19 @@ Assuming a State Machine named "SM" and a **State** named "A".
 * `{Gov:SM-St:A}Sts:Active-Sts`: R/O, binary. Indicates whether "A" **is** the current **State** of
   the "SM" State Machine
 
-### Per State and Device PVs
+### Per Device PVs
+
+Assuming a **Device** named "dev".
+
+* `{Gov:SM-Dev:dev}Sts:Tgts-I`: R/O, list of string. Holds all **Target** names of this **Device**.
+
+### Per Device and State PVs
 
 Assuming a State Machine named "SM", a **State** named "A" and a **Device** named "dev".
 
-* `{Gov:SM-St:A}LLim:dev-Pos`: R/W, number. Holds the lower limit, relative to the target position,
+* `{Gov:SM-Dev:dev}A:LLim-Pos`: R/W, number. Holds the lower limit, relative to the target position,
   for the device "dev" when in state "A".
-* `{Gov:SM-St:A}HLim:dev-Pos`: R/W, number. Holds the upper limit, relative to the target position,
+* `{Gov:SM-Dev:dev}A:HLim-Pos`: R/W, number. Holds the upper limit, relative to the target position,
   for the device "dev" when in state "A".
 
 ### Per Device and Target PV

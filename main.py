@@ -119,8 +119,8 @@ class GovernorDriver(Driver):
             self.setParam(prefix + 'Sts:Reach-Sts', state_updates["reachable"])
 
             for device_name, (low_lim, high_lim) in state_updates["limits"].items():
-                low_param = '{{Gov:{}-St:{}}}LLim:{}-Pos'.format(gov_name, state_name, device_name)
-                high_param = '{{Gov:{}-St:{}}}HLim:{}-Pos'.format(gov_name,state_name, device_name)
+                low_param = '{{Gov:{}-Dev:{}}}{}:LLim-Pos'.format(gov_name, device_name, state_name)
+                high_param = '{{Gov:{}-Dev:{}}}{}:HLim-Pos'.format(gov_name, device_name, state_name)
                 self.setParam(low_param, low_lim)
                 self.setParam(high_param, high_lim)
 
@@ -144,8 +144,8 @@ class GovernorDriver(Driver):
             The PV name
         :return: The value of the PV
         """
-        gov_status = re.match('\{Gov:(.*)\}Sts:Status-Sts', reason)
-        gov_status_message = re.match('\{Gov:(.*)\}Sts:Msg-Sts', reason)
+        gov_status = re.match(r'\{Gov:(.+)\}Sts:Status-Sts', reason)
+        gov_status_message = re.match(r'\{Gov:(.+)\}Sts:Msg-Sts', reason)
 
         if reason == "{Gov}Active-Sel":
             return self._active
@@ -173,12 +173,12 @@ class GovernorDriver(Driver):
         self._logger.debug("write(reason=%s,value=%s)", reason, value)
         status = True
 
-        gov_abort = re.match('\{Gov:(?P<gov_name>.*)\}Cmd:Abort-Cmd', reason)
-        gov_go = re.match('\{Gov:(?P<gov_name>.*)\}Cmd:Go-Cmd', reason)
-        # Limit reason is something like: {Gov:Human-St:SE}HLim:bsz-Pos
-        dev_limit = re.match('\{Gov:(?P<gov_name>.*)-St:(?P<state_name>.*)\}(?P<limit>.*):(?P<dev_name>.*)-Pos', reason)
+        gov_abort = re.match(r'\{Gov:(?P<gov_name>.+)\}Cmd:Abort-Cmd', reason)
+        gov_go = re.match(r'\{Gov:(?P<gov_name>.+)\}Cmd:Go-Cmd', reason)
+        # Limit reason is something like: {Gov:Human-Dev:bsz}SE:HLim-Pos
+        dev_limit = re.match(r'\{Gov:(?P<gov_name>.+)-Dev:(?P<dev_name>.*)\}(?P<state_name>.*):(?P<limit>.*)-Pos', reason)
         # Position reason is something like {Gov:Human-Dev:bsy}Pos:Down-Pos
-        dev_pos = re.match('\{Gov:(?P<gov_name>.*)-Dev:(?P<dev_name>.*)\}Pos:(?P<pos_name>.*)-Pos', reason)
+        dev_pos = re.match(r'\{Gov:(?P<gov_name>.+)-Dev:(?P<dev_name>.*)\}Pos:(?P<pos_name>.*)-Pos', reason)
 
         if reason == "{Gov}Active-Sel":
             self._active = bool(value)
@@ -320,6 +320,15 @@ if __name__ == '__main__':
         }
     })
 
+    # List of all existing governors
+    server.createPV(args.prefix, {
+        '{Gov}Sts:Configs-I': {
+            'type': 'string',
+            'value': sorted(config['name'] for config in configs),
+            'count': len([config for config in configs]),
+        }
+    })
+
     # Abort all governors
     server.createPV(args.prefix, {
         '{Gov}Cmd:Abort-Cmd': {
@@ -419,7 +428,8 @@ if __name__ == '__main__':
         # Busy transitioning
         server.createPV(args.prefix, {
             gov_prefix+'Sts:Busy-Sts': {
-                'type': 'int',
+                'type': 'enum',
+                'enums': ['No', 'Yes'],
                 'value': 0,
             }
         })
@@ -446,15 +456,15 @@ if __name__ == '__main__':
                 name = '{{Gov:{}-Dev:{}}}Pos:{}-Pos'.format(gov_name, device_name, target)
                 server.createPV(args.prefix, {name: {'type': 'float', 'value': 0}})
 
+            for state_name in governor.states:
+                for lim in ('LLim', 'HLim'):
+                    name = '{{Gov:{}-Dev:{}}}{}:{}-Pos'.format(gov_name, device_name, state_name, lim)
+                    server.createPV(args.prefix, {name: {'type': 'float', 'value': 0}})
+
         for state_name in governor.states:
             dev = '{{Gov:{}-St:{}}}'.format(gov_name, state_name)
             server.createPV(args.prefix, {dev + 'Sts:Reach-Sts': {'type': 'int', 'value': 0}})
             server.createPV(args.prefix, {dev + 'Sts:Active-Sts': {'type': 'int', 'value': 0}})
-
-            for device_name in governor.devices:
-                for lim in ('LLim', 'HLim'):
-                    name = '{}{}:{}-Pos'.format(dev, lim, device_name)
-                    server.createPV(args.prefix, {name: {'type': 'float', 'value': 0}})
 
             for next_state in governor.reachable_states(state_name):
                 dev = '{{Gov:{}-Tr:{}-{}}}'.format(gov_name, state_name, next_state)
