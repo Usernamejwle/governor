@@ -456,7 +456,7 @@ list of entries of the form `dev_name: [List of Targets]`. For example:
     device2: [In]
 
 If this synchronization file is loaded, then whenever one of the specified Targets is changed in one
-State Machine the change will be propagated to all other State Machines currently loaded.
+State Machine the change will be propagated to all other State Machines currently loaded.json
 
 
 
